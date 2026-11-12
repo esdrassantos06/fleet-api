@@ -20,4 +20,42 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run lint:check
+      - run: npm run test
       - run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: fleet
+          POSTGRES_PASSWORD: fleet
+          POSTGRES_DB: fleet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fleet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: fleet
+      DB_PASSWORD: fleet
+      DB_NAME: fleet
+      JWT_SECRET: ci-only-secret
+      JWT_EXPIRES_IN: 1h
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:e2e
