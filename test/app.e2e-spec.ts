@@ -10,7 +10,7 @@ describe('Auth flow (e2e)', () => {
   const user = {
     name: 'E2E User',
     email: `e2e-${Date.now()}@example.com`,
-    password: 'Secret123',
+    password: 'Secret123!',
   };
 
   beforeAll(async () => {
