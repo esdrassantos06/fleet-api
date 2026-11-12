@@ -1,10 +1,21 @@
 {
   "name": "fleet-api",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "NestJS and TypeORM API for a fleet management app, with JWT auth through Passport and Argon2 password hashing",
+  "author": "Esdras Santos (https://www.portfolioesdras.com)",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "homepage": "https://github.com/esdrassantos06/fleet-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/esdrassantos06/fleet-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/esdrassantos06/fleet-api/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
