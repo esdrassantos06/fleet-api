@@ -1,18 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
+  const usersService = { findAll: vi.fn() };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    vi.resetAllMocks();
+    const moduleRef = await Test.createTestingModule({
       controllers: [UsersController],
+      providers: [{ provide: UsersService, useValue: usersService }],
     }).compile();
-
-    controller = module.get<UsersController>(UsersController);
+    controller = moduleRef.get(UsersController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('lists users through the users service', async () => {
+    usersService.findAll.mockResolvedValue([{ id: 'u1' }]);
+
+    await expect(controller.findAll()).resolves.toEqual([{ id: 'u1' }]);
   });
 });

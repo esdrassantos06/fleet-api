@@ -1,25 +1,78 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { AppModule } from '../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('Auth flow (e2e)', () => {
   let app: INestApplication<App>;
+  const user = {
+    name: 'E2E User',
+    email: `e2e-${Date.now()}@example.com`,
+    password: 'Secret123',
+  };
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-
-    app = moduleFixture.createNestApplication();
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('registers, logs in and reads the profile with the token', async () => {
+    const registered = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send(user)
+      .expect(201);
+    expect(registered.body).toMatchObject({
+      name: user.name,
+      email: user.email,
+    });
+    expect(registered.body).not.toHaveProperty('passwordHash');
+    expect(registered.body).not.toHaveProperty('password');
+
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: user.email, password: user.password })
+      .expect(200);
+    const { access_token } = login.body as { access_token: string };
+    expect(access_token).toEqual(expect.any(String));
+
+    const profile = await request(app.getHttpServer())
+      .get('/auth/profile')
+      .set('Authorization', `Bearer ${access_token}`)
+      .expect(200);
+    expect(profile.body).toMatchObject({ email: user.email });
+  });
+
+  it('rejects a second sign-up with the same email', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send(user)
+      .expect(409);
+  });
+
+  it('rejects a wrong password', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: user.email, password: 'Wrong1234' })
+      .expect(401);
+  });
+
+  it('rejects the profile route without a token', async () => {
+    await request(app.getHttpServer()).get('/auth/profile').expect(401);
   });
 });

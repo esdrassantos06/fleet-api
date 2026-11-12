@@ -1,28 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersService } from './users/users.service';
-import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { JwtSettingsModule } from './jwt/jwt.module';
 
 describe('AppController', () => {
   let appController: AppController;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      imports: [DatabaseModule, AuthModule, UsersModule, JwtSettingsModule],
+    const moduleRef = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService, UsersService],
+      providers: [AppService],
     }).compile();
-
-    appController = app.get<AppController>(AppController);
+    appController = moduleRef.get(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  it('returns "Hello World!" on the root route', () => {
+    expect(appController.getHello()).toBe('Hello World!');
   });
 });
